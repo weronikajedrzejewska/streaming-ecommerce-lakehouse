@@ -1,0 +1,28 @@
+{
+  "type": "struct",
+  "fields": [
+    { "name": "event_id", "type": "string", "nullable": true, "metadata": {} },
+    { "name": "event_type", "type": "string", "nullable": true, "metadata": {} },
+    { "name": "event_timestamp", "type": "string", "nullable": true, "metadata": {} },
+    { "name": "ingestion_timestamp", "type": "string", "nullable": true, "metadata": {} },
+    { "name": "user_id", "type": "string", "nullable": true, "metadata": {} },
+    { "name": "session_id", "type": "string", "nullable": true, "metadata": {} },
+    { "name": "country", "type": "string", "nullable": true, "metadata": {} },
+    {
+      "name": "payload",
+      "type": {
+        "type": "struct",
+        "fields": [
+          { "name": "product_id", "type": "string", "nullable": true, "metadata": {} },
+          { "name": "category", "type": "string", "nullable": true, "metadata": {} },
+          { "name": "price", "type": "double", "nullable": true, "metadata": {} },
+          { "name": "currency", "type": "string", "nullable": true, "metadata": {} },
+          { "name": "quantity", "type": "integer", "nullable": true, "metadata": {} },
+          { "name": "cart_value", "type": "double", "nullable": true, "metadata": {} }
+        ]
+      },
+      "nullable": true,
+      "metadata": {}
+    }
+  ]
+}
