@@ -9,6 +9,7 @@ Build a near-real-time pipeline that handles:
 - late and out-of-order events
 - checkpoint-based recovery
 - lakehouse-style Bronze and Silver layers
+- persisted Silver event output and streaming metrics
 
 ## Architecture
 
@@ -21,6 +22,7 @@ Build a near-real-time pipeline that handles:
 - PySpark Structured Streaming
 - Parquet
 - Local filesystem (MVP)
+- GitHub Actions
 
 ## Project Structure
 
@@ -35,13 +37,23 @@ sql/silver_metrics.sql
 ## Data Layers
 
 - Bronze: raw, append-only events with ingestion timestamp
-- Silver: cleaned, typed, filtered events and stateful windowed metrics
+- Silver events: cleaned, typed, filtered event stream persisted to Parquet
+- Silver metrics: stateful windowed metrics persisted to Parquet
 
 ## Design Decisions
 
 - Micro-batch streaming instead of continuous processing for simplicity and stability.
 - Parquet instead of Delta to keep setup lightweight and dependency-free for MVP.
 - At-least-once ingestion with idempotent-style transformations in Silver.
+- Separate Silver event sink and observability query so data is persisted and easy to inspect.
+
+## What Makes It Production-Style
+
+- checkpoint-backed recovery for Bronze and Silver streaming queries
+- explicit handling of late and out-of-order events with watermarking
+- persisted Silver event dataset in addition to streaming metrics
+- unit tests for producer and Spark transformation logic
+- CI workflow for linting and tests
 
 ## Real-World Streaming Scenarios
 
@@ -76,6 +88,24 @@ python src/producer/kafka_producer.py
 python src/streaming/stream_to_bronze_silver.py
 ```
 
+## Local Quality Checks
+
+Run locally:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python3 -m pip install -r requirements.txt -r requirements-dev.txt
+make lint
+make test
+```
+
+This validates:
+
+- event generation shape and business assumptions
+- Silver filtering logic for malformed commerce events
+- Silver windowed metrics on a local Spark session
+- local output path setup used by the streaming job
+
 ## Failure Recovery Check
 
 1. Start streaming job and let data flow for 1-2 minutes.
@@ -83,8 +113,23 @@ python src/streaming/stream_to_bronze_silver.py
 3. Start it again with the same checkpoint location.
 4. Confirm job resumes correctly and keeps processing new events.
 
+## Expected Outputs
+
+After the job runs, the local lakehouse should contain:
+
+```text
+data/bronze/events/
+data/silver/events/
+data/silver/metrics/
+data/checkpoints/bronze_events/
+data/checkpoints/silver_events/
+data/checkpoints/silver_metrics/
+```
+
+This makes it possible to inspect both the cleaned Silver event stream and the aggregated metrics output.
+
 ## Next Steps
 
 - Add dashboard for Silver metrics.
-- Add data quality assertions for critical columns.
+- Add direct end-to-end integration test using Redpanda in Docker.
 - Add cloud deployment variant (Kinesis/MSK + S3 + Glue/EMR).

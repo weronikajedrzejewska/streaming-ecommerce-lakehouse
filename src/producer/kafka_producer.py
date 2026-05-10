@@ -7,7 +7,6 @@ from uuid import uuid4
 
 from kafka import KafkaProducer
 
-
 TOPIC = os.getenv("KAFKA_TOPIC", "ecommerce_events")
 BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 EVENTS_PER_SECOND = float(os.getenv("EVENTS_PER_SECOND", "5"))
