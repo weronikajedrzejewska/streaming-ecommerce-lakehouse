@@ -40,12 +40,15 @@ sql/silver_metrics.sql
 - Silver events: cleaned, typed, filtered event stream persisted to Parquet
 - Silver metrics: stateful windowed metrics persisted to Parquet
 
-## Design Decisions
+## Design Decisions and Trade-offs
 
-- Micro-batch streaming instead of continuous processing for simplicity and stability.
-- Parquet instead of Delta to keep setup lightweight and dependency-free for MVP.
-- At-least-once ingestion with idempotent-style transformations in Silver.
-- Separate Silver event sink and observability query so data is persisted and easy to inspect.
+**Micro-batch vs continuous streaming:** The pipeline uses micro-batch mode (`processingTime="10 seconds"`) rather than continuous processing. Micro-batch gives exactly-once semantics with checkpointing and is easier to reason about operationally — continuous mode adds latency savings that are not relevant at this event volume.
+
+**Parquet instead of Delta Lake:** Delta would add schema enforcement and ACID transactions, but also a heavyweight dependency. For a Bronze/Silver MVP the goal is demonstrating the streaming logic, not the storage layer. A migration to Delta would be configuration-only.
+
+**At-least-once with idempotent Silver filter:** Kafka source delivers at-least-once. Duplicates are tolerated at Bronze (append-only raw layer). Silver applies a deterministic quality filter, so reprocessing the same batch produces the same output.
+
+**Separate observability query for Silver:** A dedicated `foreachBatch` sink logs row counts and processing time per micro-batch independently of the write path. This means observability does not add latency to the Silver write and can be changed or disabled without touching the data sink.
 
 ## What Makes It Production-Style
 
@@ -128,8 +131,8 @@ data/checkpoints/silver_metrics/
 
 This makes it possible to inspect both the cleaned Silver event stream and the aggregated metrics output.
 
-## Next Steps
+## Possible Extensions
 
-- Add dashboard for Silver metrics.
-- Add direct end-to-end integration test using Redpanda in Docker.
-- Add cloud deployment variant (Kinesis/MSK + S3 + Glue/EMR).
+- Dashboard for Silver metrics (Grafana or similar).
+- End-to-end integration test using Redpanda in Docker.
+- Cloud deployment variant: Kinesis/MSK + S3 + Glue Streaming or EMR.

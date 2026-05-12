@@ -42,9 +42,16 @@ def ensure_parent_dirs(*paths: str) -> None:
 
 def log_batch(df: DataFrame, epoch_id: int, label: str) -> None:
     start = time.time()
-    batch_count = df.count()
+    total = df.count()
+    commerce = df.filter(F.col("event_type").isin("add_to_cart", "purchase")).count()
+    page_views = df.filter(F.col("event_type") == "page_view").count()
     duration = round(time.time() - start, 2)
-    print(f"[{label}] epoch={epoch_id} rows={batch_count} count_time_seconds={duration}")
+    commerce_pct = round(100 * commerce / max(total, 1), 1)
+    print(
+        f"[{label}] epoch={epoch_id} rows={total} "
+        f"commerce={commerce} ({commerce_pct}%) page_views={page_views} "
+        f"count_time_seconds={duration}"
+    )
 
 
 def build_bronze_df(kafka_df: DataFrame) -> DataFrame:
