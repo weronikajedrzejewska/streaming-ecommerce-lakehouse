@@ -111,7 +111,14 @@ def build_silver_metrics_df(silver_clean_df: DataFrame) -> DataFrame:
 
 
 def get_spark() -> SparkSession:
-    spark = SparkSession.builder.appName("streaming_ecommerce_bronze_silver").getOrCreate()
+    spark = (
+        SparkSession.builder.appName("streaming_ecommerce_bronze_silver")
+        .config(
+            "spark.jars.packages",
+            "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1",
+        )
+        .getOrCreate()
+    )
     spark.sparkContext.setLogLevel("WARN")
     return spark
 

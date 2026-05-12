@@ -58,6 +58,20 @@ sql/silver_metrics.sql
 - unit tests for producer and Spark transformation logic
 - CI workflow for linting and tests
 
+## Pipeline in Action
+
+Silver micro-batch observability log — row count, commerce share, and page views per epoch:
+
+![Silver log_batch output](docs/images/streaming_log_batch.png)
+
+Redpanda Console — topic `ecommerce_events` with incoming messages:
+
+![Redpanda topic](docs/images/streaming_redpanda_topic.png)
+
+Local lakehouse after pipeline run — Bronze and Silver layers written to Parquet:
+
+![Lakehouse structure](docs/images/streaming_lakehouse_structure.png)
+
 ## Real-World Streaming Scenarios
 
 - Late-arriving events are simulated in the producer.
