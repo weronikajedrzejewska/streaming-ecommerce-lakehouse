@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import time
 from pathlib import Path
@@ -6,6 +7,8 @@ from pathlib import Path
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
+
+logger = logging.getLogger(__name__)
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "ecommerce_events")
@@ -47,10 +50,15 @@ def log_batch(df: DataFrame, epoch_id: int, label: str) -> None:
     page_views = df.filter(F.col("event_type") == "page_view").count()
     duration = round(time.time() - start, 2)
     commerce_pct = round(100 * commerce / max(total, 1), 1)
-    print(
-        f"[{label}] epoch={epoch_id} rows={total} "
-        f"commerce={commerce} ({commerce_pct}%) page_views={page_views} "
-        f"count_time_seconds={duration}"
+    logger.info(
+        "[%s] epoch=%d rows=%d commerce=%d (%.1f%%) page_views=%d count_time_seconds=%.2f",
+        label,
+        epoch_id,
+        total,
+        commerce,
+        commerce_pct,
+        page_views,
+        duration,
     )
 
 
@@ -80,10 +88,7 @@ def build_silver_clean_df(parsed_df: DataFrame) -> DataFrame:
     return parsed_df.filter(
         F.col("event_id").isNotNull()
         & F.col("event_ts").isNotNull()
-        & ~(
-            F.col("event_type").isin("add_to_cart", "purchase")
-            & F.col("payload.price").isNull()
-        )
+        & ~(F.col("event_type").isin("add_to_cart", "purchase") & F.col("payload.price").isNull())
     )
 
 
@@ -124,6 +129,7 @@ def get_spark() -> SparkSession:
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     schema = load_schema()
     ensure_parent_dirs(
         BRONZE_PATH,

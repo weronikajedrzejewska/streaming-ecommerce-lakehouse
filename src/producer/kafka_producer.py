@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import random
 import time
@@ -6,6 +7,9 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from kafka import KafkaProducer
+from kafka.errors import KafkaError
+
+logger = logging.getLogger(__name__)
 
 TOPIC = os.getenv("KAFKA_TOPIC", "ecommerce_events")
 BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
@@ -50,6 +54,7 @@ def make_event() -> dict:
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     random.seed(42)
     producer = KafkaProducer(
         bootstrap_servers=BOOTSTRAP_SERVERS,
@@ -61,17 +66,26 @@ def main() -> None:
     sleep_seconds = 1.0 / max(EVENTS_PER_SECOND, 0.1)
     sent = 0
 
-    print(f"Producing to topic={TOPIC} broker={BOOTSTRAP_SERVERS}")
-    while True:
-        event = make_event()
-        producer.send(TOPIC, value=event)
-        sent += 1
+    logger.info("Producing to topic=%s broker=%s", TOPIC, BOOTSTRAP_SERVERS)
+    try:
+        while True:
+            event = make_event()
+            try:
+                producer.send(TOPIC, value=event).get(timeout=10)
+                sent += 1
+            except KafkaError as e:
+                logger.error("Failed to send event %s: %s", event["event_id"], e)
 
-        if sent % 100 == 0:
-            producer.flush()
-            print(f"Sent {sent} events")
+            if sent % 100 == 0:
+                producer.flush()
+                logger.info("Sent %d events", sent)
 
-        time.sleep(sleep_seconds)
+            time.sleep(sleep_seconds)
+    except KeyboardInterrupt:
+        logger.info("Producer stopped after %d events", sent)
+    finally:
+        producer.flush()
+        producer.close()
 
 
 if __name__ == "__main__":

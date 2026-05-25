@@ -64,10 +64,9 @@ def test_build_silver_metrics_df_aggregates_static_batch(spark: SparkSession) ->
         ("evt-2", "purchase", "2026-04-20T10:01:00+00:00"),
         ("evt-3", "page_view", "2026-04-20T10:02:00+00:00"),
     ]
-    static_df = (
-        spark.createDataFrame(rows, ["event_id", "event_type", "event_timestamp"])
-        .withColumn("event_ts", F.to_timestamp("event_timestamp"))
-    )
+    static_df = spark.createDataFrame(
+        rows, ["event_id", "event_type", "event_timestamp"]
+    ).withColumn("event_ts", F.to_timestamp("event_timestamp"))
 
     metrics_df = build_silver_metrics_df(static_df)
     result = metrics_df.collect()
