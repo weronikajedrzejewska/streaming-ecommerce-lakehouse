@@ -2,9 +2,9 @@
 
 ![CI](https://img.shields.io/badge/CI-pytest%20%2B%20ruff-2ea44f) ![Python](https://img.shields.io/badge/python-3.11-blue) ![Spark](https://img.shields.io/badge/PySpark-Structured%20Streaming-E25A1C) ![Kafka](https://img.shields.io/badge/Redpanda-Kafka%20API-D2691E)
 
-Near-real-time data engineering pipeline ingesting synthetic e-commerce events from a Kafka-compatible broker (Redpanda) into a local lakehouse using Spark Structured Streaming. Implements Bronze and Silver layers with checkpoint-backed recovery, watermark-based late-event handling, and per-micro-batch observability.
+E-commerce teams need near-real-time visibility into customer behaviour — cart additions, purchases, drop-offs — but batch pipelines delay those insights by hours. This project demonstrates a streaming lakehouse architecture that continuously processes event data and updates Bronze and Silver layers as events arrive.
 
-The pipeline is designed around real streaming problems — late and out-of-order events, at-least-once delivery, schema validation — rather than clean tutorial data.
+Built on Spark Structured Streaming and Redpanda (Kafka-compatible broker), the pipeline handles the hard parts of streaming: late and out-of-order events, at-least-once delivery, checkpoint-backed recovery, and schema validation — rather than relying on clean tutorial data.
 
 ## Key Highlights
 
@@ -37,14 +37,9 @@ flowchart LR
 
 ![Redpanda topic](docs/images/streaming_redpanda_topic.png)
 
-<details>
-<summary><strong>More pipeline evidence</strong></summary>
-
 ### Local Lakehouse Structure After Pipeline Run
 
 ![Lakehouse structure](docs/images/streaming_lakehouse_structure.png)
-
-</details>
 
 ## Output
 
